@@ -1,0 +1,79 @@
+2026-07-27 23:52:47,174 | INFO     | healthplus.verify | Logging configured (level=INFO)
+2026-07-27 23:52:47,188 | INFO     | healthplus.verify | Starting HealthPlus AI v0.1.0
+2026-07-27 23:52:47,213 | INFO     | healthplus.verify | Foundation verified ✔
+2026-07-27 23:52:58,686 | INFO     | healthplus.verify | Logging configured (level=INFO)
+2026-07-27 23:52:58,696 | INFO     | healthplus.verify | Starting HealthPlus AI v0.1.0
+2026-07-27 23:52:58,723 | INFO     | healthplus.verify | Foundation verified ✔
+2026-07-27 23:55:47,866 | INFO     | healthplus.vector_database.vector_store | Vector store ready: collection='healthplus_documents' (0 chunks) at data\chroma
+2026-07-27 23:55:47,914 | INFO     | healthplus.document_pipeline.pdf_loader | Loaded FAQs.pdf (doc_id=515f51cd6a3929f4, category=faqs, pages=2)
+2026-07-27 23:55:47,920 | INFO     | healthplus.document_pipeline.chunker | Chunked FAQs.pdf: 2 pages -> 2 chunks
+2026-07-27 23:55:47,923 | INFO     | healthplus.vector_database.embeddings | Loading embedding model 'BAAI/bge-small-en-v1.5' ...
+2026-07-27 23:55:47,935 | INFO     | sentence_transformers.base.model | No device provided, using cpu
+2026-07-27 23:55:49,294 | INFO     | sentence_transformers.base.model | No modules.json found for BAAI/bge-small-en-v1.5, initializing a new SentenceTransformer model.
+2026-07-27 23:55:49,302 | INFO     | healthplus.vector_database.embeddings | Model not in local cache — downloading from the Hub
+2026-07-27 23:55:49,316 | INFO     | sentence_transformers.base.model | No device provided, using cpu
+2026-07-27 23:55:49,607 | WARNING  | huggingface_hub.utils._http | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-07-27 23:55:50,233 | INFO     | sentence_transformers.base.model | Loading SentenceTransformer model from BAAI/bge-small-en-v1.5.
+2026-07-28 00:00:16,604 | INFO     | healthplus.vector_database.vector_store | Vector store ready: collection='healthplus_documents' (0 chunks) at data\chroma
+2026-07-28 00:00:16,685 | INFO     | healthplus.document_pipeline.pdf_loader | Loaded FAQs.pdf (doc_id=515f51cd6a3929f4, category=faqs, pages=2)
+2026-07-28 00:00:16,690 | INFO     | healthplus.document_pipeline.chunker | Chunked FAQs.pdf: 2 pages -> 2 chunks
+2026-07-28 00:00:16,693 | INFO     | healthplus.vector_database.embeddings | Loading embedding model 'BAAI/bge-small-en-v1.5' ...
+2026-07-28 00:00:16,705 | INFO     | sentence_transformers.base.model | No device provided, using cpu
+2026-07-28 00:00:16,793 | INFO     | sentence_transformers.base.model | Loading SentenceTransformer model from BAAI/bge-small-en-v1.5.
+2026-07-28 00:00:17,333 | INFO     | healthplus.vector_database.embeddings | Model not in local cache — downloading from the Hub
+2026-07-28 00:00:17,357 | INFO     | sentence_transformers.base.model | No device provided, using cpu
+2026-07-28 00:00:18,838 | WARNING  | huggingface_hub.utils._http | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-07-28 00:00:19,287 | INFO     | sentence_transformers.base.model | Loading SentenceTransformer model from BAAI/bge-small-en-v1.5.
+2026-07-28 00:07:33,728 | INFO     | healthplus.vector_database.vector_store | Vector store ready: collection='healthplus_documents' (0 chunks) at data\chroma
+2026-07-28 00:07:33,831 | INFO     | healthplus.document_pipeline.pdf_loader | Loaded FAQs.pdf (doc_id=515f51cd6a3929f4, category=faqs, pages=2)
+2026-07-28 00:07:33,836 | INFO     | healthplus.document_pipeline.chunker | Chunked FAQs.pdf: 2 pages -> 2 chunks
+2026-07-28 00:07:33,839 | INFO     | healthplus.vector_database.embeddings | Loading embedding model 'BAAI/bge-small-en-v1.5' ...
+2026-07-28 00:07:33,848 | INFO     | sentence_transformers.base.model | No device provided, using cpu
+2026-07-28 00:07:35,344 | INFO     | sentence_transformers.base.model | No modules.json found for BAAI/bge-small-en-v1.5, initializing a new SentenceTransformer model.
+2026-07-28 00:07:35,353 | INFO     | healthplus.vector_database.embeddings | Model not in local cache — downloading from the Hub
+2026-07-28 00:07:35,364 | INFO     | sentence_transformers.base.model | No device provided, using cpu
+2026-07-28 00:07:35,646 | WARNING  | huggingface_hub.utils._http | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-07-28 00:07:36,285 | INFO     | sentence_transformers.base.model | Loading SentenceTransformer model from BAAI/bge-small-en-v1.5.
+2026-07-28 00:08:10,658 | INFO     | healthplus.vector_database.embeddings | Embedding model ready in 36.8s (dim=384)
+2026-07-28 00:08:11,501 | INFO     | healthplus.vector_database.vector_store | Upserted 2 chunks (collection now 2)
+2026-07-28 00:08:11,506 | INFO     | healthplus.application.knowledge_base_service | Ingestion complete: {'source': 'FAQs.pdf', 'category': 'faqs', 'doc_id': '515f51cd6a3929f4', 'pages': 2, 'chunks': 2, 'duration_seconds': 37.76}
+2026-07-28 00:08:11,519 | INFO     | healthplus.document_pipeline.pdf_loader | Loaded Health_Packages.pdf (doc_id=1429679c82858adc, category=health_packages, pages=2)
+2026-07-28 00:08:11,526 | INFO     | healthplus.document_pipeline.chunker | Chunked Health_Packages.pdf: 2 pages -> 2 chunks
+2026-07-28 00:08:11,784 | INFO     | healthplus.vector_database.vector_store | Upserted 2 chunks (collection now 4)
+2026-07-28 00:08:11,787 | INFO     | healthplus.application.knowledge_base_service | Ingestion complete: {'source': 'Health_Packages.pdf', 'category': 'health_packages', 'doc_id': '1429679c82858adc', 'pages': 2, 'chunks': 2, 'duration_seconds': 0.28}
+2026-07-28 00:08:11,803 | INFO     | healthplus.document_pipeline.pdf_loader | Loaded Reports.pdf (doc_id=f92cb172216c1bb9, category=reports, pages=3)
+2026-07-28 00:08:11,811 | INFO     | healthplus.document_pipeline.chunker | Chunked Reports.pdf: 3 pages -> 3 chunks
+2026-07-28 00:08:12,133 | INFO     | healthplus.vector_database.vector_store | Upserted 3 chunks (collection now 7)
+2026-07-28 00:08:12,136 | INFO     | healthplus.application.knowledge_base_service | Ingestion complete: {'source': 'Reports.pdf', 'category': 'reports', 'doc_id': 'f92cb172216c1bb9', 'pages': 3, 'chunks': 3, 'duration_seconds': 0.34}
+2026-07-28 00:08:12,151 | INFO     | healthplus.document_pipeline.pdf_loader | Loaded SOPs.pdf (doc_id=99d273ea5a1f47fc, category=sops, pages=3)
+2026-07-28 00:08:12,155 | INFO     | healthplus.document_pipeline.chunker | Chunked SOPs.pdf: 3 pages -> 3 chunks
+2026-07-28 00:08:12,513 | INFO     | healthplus.vector_database.vector_store | Upserted 3 chunks (collection now 10)
+2026-07-28 00:08:12,516 | INFO     | healthplus.application.knowledge_base_service | Ingestion complete: {'source': 'SOPs.pdf', 'category': 'sops', 'doc_id': '99d273ea5a1f47fc', 'pages': 3, 'chunks': 3, 'duration_seconds': 0.37}
+2026-07-28 00:08:12,530 | INFO     | healthplus.document_pipeline.pdf_loader | Loaded Test_Catalog.pdf (doc_id=271124e1057d6131, category=test_catalog, pages=3)
+2026-07-28 00:08:12,534 | INFO     | healthplus.document_pipeline.chunker | Chunked Test_Catalog.pdf: 3 pages -> 3 chunks
+2026-07-28 00:08:12,860 | INFO     | healthplus.vector_database.vector_store | Upserted 3 chunks (collection now 13)
+2026-07-28 00:08:12,863 | INFO     | healthplus.application.knowledge_base_service | Ingestion complete: {'source': 'Test_Catalog.pdf', 'category': 'test_catalog', 'doc_id': '271124e1057d6131', 'pages': 3, 'chunks': 3, 'duration_seconds': 0.34}
+2026-07-28 00:08:12,907 | INFO     | healthplus.ingest | Knowledge base now holds 13 chunks
+2026-07-28 00:08:12,936 | INFO     | healthplus.ingest | Chunks by category: {'faqs': 2, 'health_packages': 2, 'reports': 3, 'sops': 3, 'test_catalog': 3}
+2026-07-28 00:08:12,940 | INFO     | healthplus.ingest | Batch complete: 5 succeeded, 0 failed in 39.13s
+2026-07-28 00:14:40,846 | INFO     | healthplus.vector_database.vector_store | Vector store ready: collection='healthplus_documents' (13 chunks) at data\chroma
+2026-07-28 00:14:59,430 | INFO     | healthplus.vector_database.vector_store | Vector store ready: collection='healthplus_documents' (13 chunks) at data\chroma
+2026-07-28 00:33:01,216 | INFO     | healthplus.application.knowledge_base_service | Search: 'how doctors good?' (top_k=5, source=None, category=None)
+2026-07-28 00:33:01,230 | INFO     | healthplus.vector_database.embeddings | Loading embedding model 'BAAI/bge-small-en-v1.5' ...
+2026-07-28 00:33:01,260 | INFO     | sentence_transformers.base.model | No device provided, using cpu
+2026-07-28 00:33:01,279 | INFO     | sentence_transformers.base.model | Loading SentenceTransformer model from BAAI/bge-small-en-v1.5.
+2026-07-28 00:33:02,948 | INFO     | healthplus.vector_database.embeddings | Embedding model ready in 1.7s (dim=384)
+2026-07-28 00:33:03,938 | INFO     | healthplus.application.retriever | Retrieval: kept 5 of 5 result(s); dropped 0 below min_score=0.30
+2026-07-28 00:33:03,942 | INFO     | healthplus.application.context_manager | Context assembled: 5 block(s), 2021 chars (budget 8000), truncated=False
+2026-07-28 00:33:03,948 | INFO     | healthplus.application.chat_service | Chat turn: conversation=0210608897034cbf99344cebb609bc31, sources=5, history_messages=0
+2026-07-28 00:33:03,968 | INFO     | healthplus.llm.claude_client | Claude request: model=claude-sonnet-5, messages=1, system_chars=2771
+2026-07-28 00:36:41,361 | ERROR    | asyncio | Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Users\jaind\AppData\Local\Programs\Python\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jaind\AppData\Local\Programs\Python\Python313\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
