@@ -23,11 +23,18 @@ from __future__ import annotations
 
 import json
 import logging
+import sys
 import uuid
 from pathlib import Path
 
-import streamlit as st
-import streamlit.components.v1 as components
+# Hosted platforms (e.g. Streamlit Cloud) install requirements.txt but not
+# this project as a package, so make `src/` importable when it isn't already.
+_SRC_DIR = Path(__file__).resolve().parents[2]
+if str(_SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(_SRC_DIR))
+
+import streamlit as st  # noqa: E402
+import streamlit.components.v1 as components  # noqa: E402
 
 from healthplus.application import KnowledgeBaseService, build_chat_service
 from healthplus.config import get_settings

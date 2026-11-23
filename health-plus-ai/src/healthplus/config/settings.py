@@ -18,6 +18,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _VALID_LOG_LEVELS = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
 
+# The project folder (the one holding src/, data/, pyproject.toml).
+# Relative data/log paths resolve against it, not the current directory:
+# hosted platforms such as Streamlit Cloud start the app from the
+# repository root, where "data" would point at the wrong (empty) folder.
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
 
 class Settings(BaseSettings):
     """Single, validated source of truth for runtime configuration."""
@@ -102,6 +108,11 @@ class Settings(BaseSettings):
                 f"log_level must be one of {sorted(_VALID_LOG_LEVELS)}, got {value!r}"
             )
         return level
+
+    @field_validator("data_dir", "log_dir")
+    @classmethod
+    def _anchor_to_project_root(cls, value: Path) -> Path:
+        return value if value.is_absolute() else PROJECT_ROOT / value
 
     @model_validator(mode="after")
     def _overlap_smaller_than_chunk(self) -> "Settings":
