@@ -13,7 +13,7 @@ import openai as openai_sdk
 
 from healthplus.config import Settings, get_settings
 from healthplus.core.exceptions import ConfigurationError
-from healthplus.llm.claude_client import _get_ca_bundle
+from healthplus.llm._tls import _get_ca_bundle
 from healthplus.llm.openai_client import OpenAIClient
 
 
@@ -38,6 +38,12 @@ class OpenRouterClient(OpenAIClient):
                 api_key=settings.openrouter_api_key.get_secret_value(),
                 base_url=settings.openrouter_base_url,
                 http_client=httpx.Client(verify=_get_ca_bundle()),
+                # The SDK defaults (10-minute timeout, 2 retries with
+                # back-off) can leave a user staring at a spinner for ages
+                # when free models are busy. OpenRouter already falls back
+                # across models server-side, so fail fast here instead.
+                timeout=httpx.Timeout(45.0, connect=10.0),
+                max_retries=1,
                 # Optional attribution headers OpenRouter uses for its
                 # app rankings; harmless if ignored.
                 default_headers={"X-Title": settings.app_name},

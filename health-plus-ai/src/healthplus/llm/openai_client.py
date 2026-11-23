@@ -17,7 +17,7 @@ import httpx
 import openai as openai_sdk
 
 from healthplus.config import Settings, get_settings
-from healthplus.llm.claude_client import _get_ca_bundle
+from healthplus.llm._tls import _get_ca_bundle
 from healthplus.core.exceptions import ConfigurationError, LLMError
 
 logger = logging.getLogger(__name__)

@@ -110,9 +110,15 @@ def _get_knowledge_base() -> KnowledgeBaseService:
 
     Deliberately separate from the chat service: uploads and stats only
     need the vector store and embedder, NOT the Claude API key — so the
-    sidebar keeps working even when the key is missing.
+    sidebar keeps working even when the key is missing. The chat service
+    reuses this same instance (see _get_chat_service).
+
+    The embedding model is warmed here, at startup, so the first question
+    does not pay its load time.
     """
-    return KnowledgeBaseService()
+    kb = KnowledgeBaseService()
+    kb.warm_up()
+    return kb
 
 
 @st.cache_resource(show_spinner="Starting the assistant…")
@@ -123,8 +129,11 @@ def _get_chat_service(provider: str = "claude"):
     OpenAI does not rebuild the service each time — just the first switch.
     Raises ConfigurationError if the required API key is missing; Streamlit
     does not cache exceptions, so fixing .env and rerunning recovers cleanly.
+
+    Shares the sidebar's knowledge base rather than opening a second vector
+    store and embedding model.
     """
-    return build_chat_service(provider=provider)
+    return build_chat_service(provider=provider, kb=_get_knowledge_base())
 
 
 _bootstrap()

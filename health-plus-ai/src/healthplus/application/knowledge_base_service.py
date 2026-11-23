@@ -132,6 +132,14 @@ class KnowledgeBaseService:
             embedding, top_k=top_k, source=source, category=category
         )
 
+    def warm_up(self) -> None:
+        """Load the embedding model now instead of on the first question.
+
+        The model loads lazily, so without this the first user question
+        pays the multi-second load. Call it during app startup.
+        """
+        self._embedder.embed_query("warm up")
+
     @property
     def chunk_count(self) -> int:
         return self._store.count()

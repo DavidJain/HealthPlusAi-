@@ -102,7 +102,9 @@ class ChatService:
         return ChatAnswer(sources=list(context.sources), tokens=_stream())
 
 
-def build_chat_service(settings=None, provider: str = "claude") -> ChatService:
+def build_chat_service(
+    settings=None, provider: str = "claude", kb=None
+) -> ChatService:
     """Wire the default production chat service.
 
     The one place that knows the concrete classes; everything else depends
@@ -110,6 +112,10 @@ def build_chat_service(settings=None, provider: str = "claude") -> ChatService:
 
     ``provider`` selects the LLM backend: ``"claude"`` (default), ``"openai"``
     or ``"openrouter"``.
+
+    ``kb`` lets the caller share an already-open KnowledgeBaseService.
+    Building a second one re-opens the vector store and loads a second copy
+    of the embedding model — several seconds and extra memory for nothing.
     """
     from healthplus.application.context_manager import ContextWindowManager
     from healthplus.application.conversation_memory import InMemoryConversationMemory
@@ -117,16 +123,17 @@ def build_chat_service(settings=None, provider: str = "claude") -> ChatService:
     from healthplus.application.prompt_builder import HealthcarePromptBuilder
     from healthplus.application.query_processor import DefaultQueryProcessor
     from healthplus.application.retriever import KnowledgeBaseRetriever
-    from healthplus.llm import ClaudeClient, OpenAIClient, OpenRouterClient
+    import healthplus.llm as llm_adapters
 
-    kb = KnowledgeBaseService(settings=settings)
+    kb = kb or KnowledgeBaseService(settings=settings)
 
-    if provider == "openai":
-        llm = OpenAIClient(settings=settings)
-    elif provider == "openrouter":
-        llm = OpenRouterClient(settings=settings)
-    else:
-        llm = ClaudeClient(settings=settings)
+    # Look the client up by name so only the chosen vendor's SDK is
+    # imported (see healthplus/llm/__init__.py).
+    client_name = {
+        "openai": "OpenAIClient",
+        "openrouter": "OpenRouterClient",
+    }.get(provider, "ClaudeClient")
+    llm = getattr(llm_adapters, client_name)(settings=settings)
 
     return ChatService(
         query_processor=DefaultQueryProcessor(),
