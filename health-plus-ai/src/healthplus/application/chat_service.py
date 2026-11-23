@@ -108,7 +108,8 @@ def build_chat_service(settings=None, provider: str = "claude") -> ChatService:
     The one place that knows the concrete classes; everything else depends
     on the ports in application/components.py.
 
-    ``provider`` selects the LLM backend: ``"claude"`` (default) or ``"openai"``.
+    ``provider`` selects the LLM backend: ``"claude"`` (default), ``"openai"``
+    or ``"openrouter"``.
     """
     from healthplus.application.context_manager import ContextWindowManager
     from healthplus.application.conversation_memory import InMemoryConversationMemory
@@ -116,12 +117,14 @@ def build_chat_service(settings=None, provider: str = "claude") -> ChatService:
     from healthplus.application.prompt_builder import HealthcarePromptBuilder
     from healthplus.application.query_processor import DefaultQueryProcessor
     from healthplus.application.retriever import KnowledgeBaseRetriever
-    from healthplus.llm import ClaudeClient, OpenAIClient
+    from healthplus.llm import ClaudeClient, OpenAIClient, OpenRouterClient
 
     kb = KnowledgeBaseService(settings=settings)
 
     if provider == "openai":
         llm = OpenAIClient(settings=settings)
+    elif provider == "openrouter":
+        llm = OpenRouterClient(settings=settings)
     else:
         llm = ClaudeClient(settings=settings)
 

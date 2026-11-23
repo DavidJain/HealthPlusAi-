@@ -7,5 +7,6 @@ mocking in tests touches exactly one seam.
 
 from healthplus.llm.claude_client import ClaudeClient
 from healthplus.llm.openai_client import OpenAIClient
+from healthplus.llm.openrouter_client import OpenRouterClient
 
-__all__ = ["ClaudeClient", "OpenAIClient"]
+__all__ = ["ClaudeClient", "OpenAIClient", "OpenRouterClient"]

@@ -53,6 +53,15 @@ class Settings(BaseSettings):
     )
     openai_model: str = "gpt-4o-mini"
 
+    # OpenRouter: one key, many models, OpenAI-compatible API. The default
+    # is a free model so the app works without paid Anthropic/OpenAI keys.
+    openrouter_api_key: SecretStr | None = Field(
+        default=None,
+        validation_alias="OPENROUTER_API_KEY",
+    )
+    openrouter_model: str = "inclusionai/ling-3.2-flash:free"
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+
     # --- Retrieval / RAG ---
     retrieval_top_k: int = Field(default=5, gt=0)
     # Cosine-similarity floor: hits below this are noise, not context.

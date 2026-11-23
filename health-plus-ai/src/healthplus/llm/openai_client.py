@@ -26,6 +26,10 @@ logger = logging.getLogger(__name__)
 class OpenAIClient:
     """Thin, testable wrapper around the OpenAI Chat Completions API."""
 
+    # Name used in logs and user-facing errors; subclasses for other
+    # OpenAI-compatible providers override it.
+    label = "OpenAI"
+
     def __init__(
         self,
         settings: Settings | None = None,
@@ -57,7 +61,8 @@ class OpenAIClient:
         parameter — the convention is a leading message with role "system".
         """
         logger.info(
-            "OpenAI request: model=%s, messages=%d, system_chars=%d",
+            "%s request: model=%s, messages=%d, system_chars=%d",
+            self.label,
             self._model,
             len(messages),
             len(system),
@@ -72,14 +77,18 @@ class OpenAIClient:
                 stream=True,
             )
             for chunk in stream:
+                # Some OpenAI-compatible providers (e.g. OpenRouter) send
+                # usage/keep-alive chunks that carry no choices.
+                if not chunk.choices:
+                    continue
                 delta = chunk.choices[0].delta.content
                 if delta:
                     total_chars += len(delta)
                     yield delta
         except openai_sdk.APIConnectionError as exc:
-            raise LLMError(f"Could not reach the OpenAI API: {exc}") from exc
+            raise LLMError(f"Could not reach the {self.label} API: {exc}") from exc
         except openai_sdk.APIStatusError as exc:
             raise LLMError(
-                f"OpenAI API error ({exc.status_code}): {exc.message}"
+                f"{self.label} API error ({exc.status_code}): {exc.message}"
             ) from exc
-        logger.info("OpenAI reply complete: %d chars streamed", total_chars)
+        logger.info("%s reply complete: %d chars streamed", self.label, total_chars)
