@@ -60,6 +60,15 @@ class Settings(BaseSettings):
         validation_alias="OPENROUTER_API_KEY",
     )
     openrouter_model: str = "inclusionai/ling-3.2-flash:free"
+    # Larger than claude_max_tokens: some free models still spend tokens on
+    # hidden reasoning before the visible answer.
+    openrouter_max_tokens: int = Field(default=2048, gt=0)
+    # Tried in order when the primary model is rate-limited or down.
+    # Env format: HEALTHPLUS_OPENROUTER_FALLBACK_MODELS='["a/b:free","c/d:free"]'
+    openrouter_fallback_models: list[str] = [
+        "nvidia/nemotron-3.5-lightning:free",
+        "google/gemma-4-31b-it:free",
+    ]
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
 
     # --- Retrieval / RAG ---

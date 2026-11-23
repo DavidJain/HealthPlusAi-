@@ -44,3 +44,25 @@ class OpenRouterClient(OpenAIClient):
             )
         super().__init__(settings=settings, client=client)
         self._model = settings.openrouter_model
+        # Headroom for models that cannot switch thinking off.
+        self._max_tokens = getattr(settings, "openrouter_max_tokens", self._max_tokens)
+        self._fallbacks = [
+            m for m in getattr(settings, "openrouter_fallback_models", []) if m != self._model
+        ]
+
+    def _extra_body(self) -> dict | None:
+        """Ask OpenRouter to fall back to other models if the primary fails.
+
+        Free models are often rate-limited upstream (HTTP 429); with a
+        ``models`` list OpenRouter transparently tries the next one instead
+        of failing the request.
+        """
+        # Many free models "think" before answering, and those hidden tokens
+        # count against max_tokens: with thinking on, a RAG-sized prompt
+        # could use the whole budget and stream back an empty answer.
+        # Answers here are grounded in retrieved context, so thinking adds
+        # latency without much benefit — turn it off.
+        body: dict = {"reasoning": {"enabled": False}}
+        if self._fallbacks:
+            body["models"] = [self._model, *self._fallbacks]
+        return body

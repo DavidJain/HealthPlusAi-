@@ -70,11 +70,13 @@ class OpenAIClient:
         openai_messages = [{"role": "system", "content": system}, *messages]
         total_chars = 0
         try:
+            extra_body = self._extra_body()
             stream = self._client.chat.completions.create(
                 model=self._model,
                 max_tokens=self._max_tokens,
                 messages=openai_messages,
                 stream=True,
+                **({"extra_body": extra_body} if extra_body else {}),
             )
             for chunk in stream:
                 # Some OpenAI-compatible providers (e.g. OpenRouter) send
@@ -87,8 +89,23 @@ class OpenAIClient:
                     yield delta
         except openai_sdk.APIConnectionError as exc:
             raise LLMError(f"Could not reach the {self.label} API: {exc}") from exc
+        except openai_sdk.RateLimitError as exc:
+            raise LLMError(
+                f"{self.label} is rate-limited right now (429). Free models share a "
+                "busy pool — wait a minute and ask again, or pick another model."
+            ) from exc
         except openai_sdk.APIStatusError as exc:
             raise LLMError(
                 f"{self.label} API error ({exc.status_code}): {exc.message}"
             ) from exc
+        if total_chars == 0:
+            # A silent empty bubble looks like a UI bug; say what happened.
+            raise LLMError(
+                f"{self.label} returned an empty answer (the model may have run "
+                "out of tokens). Please ask again."
+            )
         logger.info("%s reply complete: %d chars streamed", self.label, total_chars)
+
+    def _extra_body(self) -> dict | None:
+        """Provider-specific request fields; none for plain OpenAI."""
+        return None

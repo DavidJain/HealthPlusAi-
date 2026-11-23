@@ -51,6 +51,17 @@ def test_uses_openrouter_model_not_openai_model():
     assert fake.calls[0]["messages"][0] == {"role": "system", "content": "sys"}
 
 
+def test_sends_fallback_models_and_disables_reasoning():
+    settings = _settings()
+    settings.openrouter_fallback_models = ["a/b:free", "inclusionai/ling-3.2-flash:free"]
+    fake = _FakeSDK([_chunk("ok")])
+    list(OpenRouterClient(settings=settings, client=fake).stream_reply("sys", []))
+    body = fake.calls[0]["extra_body"]
+    # Primary first, duplicates of the primary dropped from the fallbacks.
+    assert body["models"] == ["inclusionai/ling-3.2-flash:free", "a/b:free"]
+    assert body["reasoning"] == {"enabled": False}
+
+
 def test_stream_skips_chunks_without_choices():
     # OpenRouter interleaves usage / keep-alive chunks with empty choices.
     fake = _FakeSDK([_chunk("Hel"), SimpleNamespace(choices=[]), _chunk(None), _chunk("lo")])

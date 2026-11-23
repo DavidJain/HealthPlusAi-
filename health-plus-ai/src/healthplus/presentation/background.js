@@ -134,7 +134,9 @@
     var key = el.getAttribute("data-key") + ":" + to;
     if (isNaN(to) || el.__hpDone) return;
     el.__hpDone = true;
-    if (counted[key] || reduceMotion) { el.textContent = to.toLocaleString(); counted[key] = true; return; }
+    // Background tabs pause requestAnimationFrame, which would leave the
+    // number stuck at 0, so just show the final value there.
+    if (counted[key] || reduceMotion || document.hidden) { el.textContent = to.toLocaleString(); counted[key] = true; return; }
     counted[key] = true;
     var start = performance.now(), dur = 1400;
     (function tick(now) {
