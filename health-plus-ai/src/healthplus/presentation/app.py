@@ -21,8 +21,10 @@ this app should never see a Python traceback.
 
 from __future__ import annotations
 
+import html
 import json
 import linecache
+import re
 import logging
 import os
 import sys
@@ -223,14 +225,21 @@ def _render_sources(sources: list[dict]) -> None:
         return
     with st.expander(f"📄 Sources ({len(sources)})", expanded=False):
         for i, src in enumerate(sources, start=1):
+            # Keep the citation number the answer used ([n]), even when only
+            # some sources are shown.
+            number = src.get("citation", i)
             snippet = src["text"][:220].strip()
             if len(src["text"]) > 220:
                 snippet += "…"
-            cat_label = src["category"].replace("_", " ").title()
+            # Document text and file names end up inside raw HTML: escape
+            # them so a crafted PDF cannot inject markup into the page.
+            snippet = html.escape(snippet)
+            title = html.escape(str(src["source"]))
+            cat_label = html.escape(src["category"].replace("_", " ").title())
             st.markdown(
                 f"""
                 <div class="hp-source-card">
-                    <div class="hp-source-title">[{i}] {src['source']}</div>
+                    <div class="hp-source-title">[{number}] {title}</div>
                     <div class="hp-source-meta">
                         <span class="hp-badge">📄 Page {src['page_number']}</span>
                         <span class="hp-badge hp-badge-cat">{cat_label}</span>
@@ -520,6 +529,15 @@ if prompt:
                 # this turn in memory, so the conversation stays consistent.
                 st.error(f"The assistant could not reply: {exc}")
             else:
+                # Show only the sources the answer actually cites: greetings
+                # and general-information answers cite nothing, so they get
+                # no source list instead of five unrelated documents.
+                cited = {int(n) for n in re.findall(r"\[(\d+)\]", full_text)}
+                source_dicts = [
+                    {**src, "citation": number}
+                    for number, src in enumerate(source_dicts, start=1)
+                    if number in cited
+                ]
                 _render_sources(source_dicts)
                 st.session_state["messages"].append(
                     {

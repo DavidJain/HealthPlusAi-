@@ -13,6 +13,13 @@ def test_system_prompt_contains_guardrails():
     assert "MRI costs INR 8000" in system  # context embedded
 
 
+def test_general_answers_must_be_labelled_and_uncited():
+    system = HealthcarePromptBuilder().build_system("")
+    assert "**General information — not from HealthPlus documents.**" in system
+    assert "Do not add [n] citations to general information" in system
+    assert "Never invent or guess names, prices, timings" in system
+
+
 def test_empty_context_gets_explicit_marker():
     system = HealthcarePromptBuilder().build_system("")
     assert "(no relevant documents were found for this question)" in system
