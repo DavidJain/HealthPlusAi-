@@ -120,9 +120,11 @@ class KnowledgeBaseService:
         category: str | None = None,
     ) -> list[SearchResult]:
         """Semantic search over the knowledge base, optionally filtered."""
+        # Log the query length, not its text: questions can contain
+        # personal health details, and log files are easy to leak.
         logger.info(
-            "Search: %r (top_k=%d, source=%s, category=%s)",
-            query,
+            "Search: %d-char query (top_k=%d, source=%s, category=%s)",
+            len(query),
             top_k,
             source,
             category,

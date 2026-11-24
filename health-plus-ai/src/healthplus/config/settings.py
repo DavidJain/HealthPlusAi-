@@ -66,6 +66,11 @@ class Settings(BaseSettings):
         validation_alias="OPENROUTER_API_KEY",
     )
     openrouter_model: str = "inclusionai/ling-3.2-flash:free"
+    # Privacy: when true, OpenRouter only routes to providers that do not
+    # store or train on prompts. Most FREE models are excluded by this (their
+    # providers log prompts), so it is off by default; turn it on with paid
+    # models: HEALTHPLUS_OPENROUTER_DENY_DATA_COLLECTION=true
+    openrouter_deny_data_collection: bool = False
     # Larger than claude_max_tokens: some free models still spend tokens on
     # hidden reasoning before the visible answer.
     openrouter_max_tokens: int = Field(default=2048, gt=0)

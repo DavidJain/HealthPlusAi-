@@ -74,6 +74,7 @@ from healthplus.application import KnowledgeBaseService, build_chat_service
 from healthplus.config import get_settings
 from healthplus.core.exceptions import ConfigurationError, HealthPlusError, LLMError
 from healthplus.core.logging import configure_logging
+from healthplus.core.privacy import redact_personal_data
 from healthplus.knowledge_base.models import DocumentCategory
 
 logger = logging.getLogger(__name__)
@@ -210,7 +211,22 @@ def _reset_conversation() -> None:
     Rotating the id matters: the service's memory is keyed by it, so a new
     id means the LLM also starts from a blank history — clearing only the
     display would leave the model still 'remembering' the old chat.
+
+    The old conversation is also deleted server-side, for every provider's
+    cached service, so cleared chats are not kept in memory.
     """
+    old_id = st.session_state.get("conversation_id")
+    if old_id:
+        settings = get_settings()
+        for provider, info in PROVIDERS.items():
+            # Skip providers without a key: they were never used, and
+            # building them would just import a heavy SDK for nothing.
+            if getattr(settings, info["env_key"].lower(), None) is None:
+                continue
+            try:
+                _get_chat_service(provider).forget(old_id)
+            except HealthPlusError:
+                pass
     st.session_state["messages"] = []
     st.session_state["conversation_id"] = uuid.uuid4().hex
 
@@ -302,6 +318,12 @@ with st.sidebar:
     if st.button("🗑️ Clear conversation", use_container_width=True):
         _reset_conversation()
         st.rerun()
+
+    st.caption(
+        "🔒 **Privacy:** don't enter personal details. Phone numbers, emails, "
+        "and ID or card numbers are removed automatically before a question "
+        "is sent. Chats are not saved — clearing deletes them from memory."
+    )
 
     st.markdown('<hr class="hp-divider">', unsafe_allow_html=True)
 
@@ -499,10 +521,19 @@ except HealthPlusError as exc:
 prompt = st.chat_input("Ask about doctors, tests, pricing, policies…") or pending_prompt
 if prompt:
     intro_slot.markdown(COMPACT_HEADER, unsafe_allow_html=True)
+    # Remove personal identifiers before the question is shown, stored in
+    # the chat log, or sent anywhere (the service redacts again, too).
+    redaction = redact_personal_data(prompt)
+    prompt = redaction.text
     # Echo the user's message immediately so the app feels responsive while
     # retrieval and the Claude call happen below.
     with st.chat_message("user"):
         st.markdown(prompt)
+        if redaction.changed:
+            st.caption(
+                f"🔒 For your privacy, we removed your {' and '.join(redaction.removed)} "
+                "before sending this question. The assistant never needs personal details."
+            )
     st.session_state["messages"].append({"role": "user", "content": prompt})
 
     with st.chat_message("assistant"):

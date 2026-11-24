@@ -20,6 +20,10 @@ _VALID_ROLES = {"user", "assistant"}
 class InMemoryConversationMemory:
     """Windowed chat history keyed by conversation id."""
 
+    # Privacy and memory bound: keep at most this many conversations; the
+    # least recently used one is forgotten first.
+    MAX_CONVERSATIONS = 200
+
     def __init__(self, max_turns: int | None = None) -> None:
         # One "turn" = a user message plus the assistant reply, so the
         # message window is max_turns * 2.
@@ -29,9 +33,15 @@ class InMemoryConversationMemory:
     def append(self, conversation_id: str, role: str, content: str) -> None:
         if role not in _VALID_ROLES:
             raise ValueError(f"role must be one of {sorted(_VALID_ROLES)}, got {role!r}")
-        self._conversations.setdefault(conversation_id, []).append(
-            {"role": role, "content": content}
-        )
+        # Re-insert to mark this conversation as most recently used.
+        messages = self._conversations.pop(conversation_id, [])
+        messages.append({"role": role, "content": content})
+        # Store only the window that is ever read back — older messages
+        # are not kept around at all.
+        self._conversations[conversation_id] = messages[-self._max_messages :]
+        while len(self._conversations) > self.MAX_CONVERSATIONS:
+            oldest = next(iter(self._conversations))
+            del self._conversations[oldest]
 
     def history(self, conversation_id: str) -> list[dict]:
         """Return a windowed COPY — callers must not mutate stored state."""

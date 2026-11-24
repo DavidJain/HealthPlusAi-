@@ -52,3 +52,27 @@ def test_clear_removes_conversation():
     memory.append("c1", "user", "hi")
     memory.clear("c1")
     assert memory.history("c1") == []
+
+
+def test_only_the_window_is_stored_not_just_returned():
+    memory = InMemoryConversationMemory(max_turns=1)
+    for i in range(5):
+        memory.append("c", "user", f"q{i}")
+        memory.append("c", "assistant", f"a{i}")
+    # Older messages are dropped from storage, not merely hidden on read.
+    assert memory._conversations["c"] == [
+        {"role": "user", "content": "q4"},
+        {"role": "assistant", "content": "a4"},
+    ]
+
+
+def test_least_recently_used_conversations_are_forgotten(monkeypatch):
+    monkeypatch.setattr(InMemoryConversationMemory, "MAX_CONVERSATIONS", 2)
+    memory = InMemoryConversationMemory(max_turns=2)
+    memory.append("a", "user", "1")
+    memory.append("b", "user", "2")
+    memory.append("a", "user", "3")  # "a" is now the most recently used
+    memory.append("c", "user", "4")  # evicts "b"
+    assert memory.history("b") == []
+    assert [m["content"] for m in memory.history("a")] == ["1", "3"]
+    assert memory.history("c") == [{"role": "user", "content": "4"}]

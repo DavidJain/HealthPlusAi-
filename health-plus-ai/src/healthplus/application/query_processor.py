@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import logging
 
+from healthplus.core.privacy import redact_personal_data
+
 logger = logging.getLogger(__name__)
 
 # Hard ceiling on query length. Anything longer is almost certainly a
@@ -41,5 +43,12 @@ class DefaultQueryProcessor:
                 f"the maximum is {MAX_QUERY_CHARS}."
             )
 
-        logger.debug("Normalized query: %r", normalized)
-        return normalized
+        # Strip personal identifiers before the query reaches embeddings,
+        # logs, conversation memory, or the external LLM provider.
+        redaction = redact_personal_data(normalized)
+        if redaction.changed:
+            logger.info("Removed personal data from a query: %s", ", ".join(redaction.removed))
+
+        # Log the length only — question text can contain health details.
+        logger.debug("Normalized query (%d chars)", len(redaction.text))
+        return redaction.text

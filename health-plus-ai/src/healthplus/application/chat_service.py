@@ -62,6 +62,10 @@ class ChatService:
         self._memory = memory
         self._llm = llm
 
+    def forget(self, conversation_id: str) -> None:
+        """Delete everything stored for a conversation (user cleared it)."""
+        self._memory.clear(conversation_id)
+
     def answer(
         self, query: str, conversation_id: str, category: str | None = None
     ) -> ChatAnswer:

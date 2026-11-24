@@ -7,3 +7,6 @@ __pycache__/
 *.py[cod]
 .venv/
 *.egg-info/
+
+# Runtime logs (may contain usage details)
+logs/

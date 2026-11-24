@@ -62,6 +62,18 @@ def test_sends_fallback_models_and_disables_reasoning():
     assert body["reasoning"] == {"enabled": False}
 
 
+def test_data_collection_deny_is_opt_in():
+    fake = _FakeSDK([_chunk("ok")])
+    list(OpenRouterClient(settings=_settings(), client=fake).stream_reply("sys", []))
+    assert "provider" not in fake.calls[0]["extra_body"]
+
+    settings = _settings()
+    settings.openrouter_deny_data_collection = True
+    fake = _FakeSDK([_chunk("ok")])
+    list(OpenRouterClient(settings=settings, client=fake).stream_reply("sys", []))
+    assert fake.calls[0]["extra_body"]["provider"] == {"data_collection": "deny"}
+
+
 def test_stream_skips_chunks_without_choices():
     # OpenRouter interleaves usage / keep-alive chunks with empty choices.
     fake = _FakeSDK([_chunk("Hel"), SimpleNamespace(choices=[]), _chunk(None), _chunk("lo")])

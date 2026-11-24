@@ -55,6 +55,7 @@ class OpenRouterClient(OpenAIClient):
         self._fallbacks = [
             m for m in getattr(settings, "openrouter_fallback_models", []) if m != self._model
         ]
+        self._deny_data_collection = getattr(settings, "openrouter_deny_data_collection", False)
 
     def _extra_body(self) -> dict | None:
         """Ask OpenRouter to fall back to other models if the primary fails.
@@ -71,4 +72,7 @@ class OpenRouterClient(OpenAIClient):
         body: dict = {"reasoning": {"enabled": False}}
         if self._fallbacks:
             body["models"] = [self._model, *self._fallbacks]
+        if self._deny_data_collection:
+            # Only providers that neither store nor train on prompts.
+            body["provider"] = {"data_collection": "deny"}
         return body
