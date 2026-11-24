@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import sys
 import uuid
 from pathlib import Path
@@ -35,6 +36,18 @@ if str(_SRC_DIR) not in sys.path:
 
 import streamlit as st  # noqa: E402
 import streamlit.components.v1 as components  # noqa: E402
+
+# API keys can come from `.env` (local) or Streamlit secrets (Streamlit
+# Cloud: app Settings -> Secrets). Settings only reads environment
+# variables, so copy any secrets-provided keys into the environment before
+# get_settings() is first called. Real environment variables win.
+_SECRET_KEYS = ("OPENROUTER_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY")
+try:
+    for _key in _SECRET_KEYS:
+        if not os.environ.get(_key) and _key in st.secrets:
+            os.environ[_key] = str(st.secrets[_key]).strip()
+except Exception:  # no secrets.toml (normal for local runs using .env)
+    pass
 
 from healthplus.application import KnowledgeBaseService, build_chat_service
 from healthplus.config import get_settings
@@ -433,8 +446,10 @@ try:
 except ConfigurationError as exc:
     key_hint = PROVIDERS[selected_provider]["env_key"]
     st.error(
-        f"Chat is not available: {exc}\n\n"
-        f"To fix this, add `{key_hint}` to your `.env` file, then restart the app."
+        f"Chat is not available: `{key_hint}` is not set.\n\n"
+        f"- **Running locally:** add `{key_hint}=...` to your `.env` file, then restart the app.\n"
+        f'- **On Streamlit Cloud:** open your app\'s **Settings → Secrets**, add '
+        f'`{key_hint} = "..."` (with quotes), and save. The app restarts by itself.'
     )
     st.stop()
 except HealthPlusError as exc:
