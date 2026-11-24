@@ -53,12 +53,20 @@ import streamlit.components.v1 as components  # noqa: E402
 # variables, so copy any secrets-provided keys into the environment before
 # get_settings() is first called. Real environment variables win.
 _SECRET_KEYS = ("OPENROUTER_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY")
+# Short, value-free description of what st.secrets held, shown only in the
+# "key not set" error to help diagnose deployment setup. Never key values.
+_secrets_status = "not checked"
 try:
+    _secret_names = sorted(st.secrets.keys())
+    _secrets_status = (
+        f"loaded; top-level names: {', '.join(_secret_names)}"
+        if _secret_names else "loaded but empty"
+    )
     for _key in _SECRET_KEYS:
         if not os.environ.get(_key) and _key in st.secrets:
             os.environ[_key] = str(st.secrets[_key]).strip()
-except Exception:  # no secrets.toml (normal for local runs using .env)
-    pass
+except Exception as _exc:  # no secrets.toml (normal for local runs using .env)
+    _secrets_status = f"not available ({type(_exc).__name__})"
 
 from healthplus.application import KnowledgeBaseService, build_chat_service
 from healthplus.config import get_settings
@@ -470,7 +478,9 @@ except ConfigurationError as exc:
         f"Chat is not available: `{key_hint}` is not set.\n\n"
         f"- **Running locally:** add `{key_hint}=...` to your `.env` file, then restart the app.\n"
         f'- **On Streamlit Cloud:** open your app\'s **Settings → Secrets**, add '
-        f'`{key_hint} = "..."` (with quotes), and save. The app restarts by itself.'
+        f'`{key_hint} = "..."` (with quotes), and save. The app restarts by itself.\n\n'
+        f"_Diagnostics: Streamlit secrets {_secrets_status}; "
+        f"environment variable {'present' if os.environ.get(key_hint) else 'absent'}._"
     )
     st.stop()
 except HealthPlusError as exc:
