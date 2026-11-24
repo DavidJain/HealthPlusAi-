@@ -20,3 +20,8 @@ toolbarMode = "minimal"
 
 [server]
 headless = true
+# The watcher re-scans every imported module for code changes. With
+# transformers loaded it walks hundreds of optional submodules and logs a
+# "No module named 'torchvision'" traceback for each; it also costs CPU.
+# Restart the app after editing code instead.
+fileWatcherType = "none"
