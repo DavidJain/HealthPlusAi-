@@ -148,3 +148,11 @@ class KnowledgeBaseService:
 
     def category_counts(self) -> dict[str, int]:
         return self._store.category_counts()
+
+    def documents(self) -> list[dict]:
+        """Source documents in the knowledge base (for the admin panel)."""
+        return self._store.documents()
+
+    def delete_document(self, source: str) -> int:
+        """Remove one source document's chunks; returns how many were removed."""
+        return self._store.delete_source(source)

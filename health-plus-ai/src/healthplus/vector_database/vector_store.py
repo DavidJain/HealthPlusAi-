@@ -102,6 +102,28 @@ class VectorStore:
             counts[key] = counts.get(key, 0) + 1
         return dict(sorted(counts.items()))
 
+    def documents(self) -> list[dict]:
+        """One row per source document: name, category, chunk count."""
+        records = self._collection.get(include=["metadatas"])
+        rows: dict[str, dict] = {}
+        for meta in records["metadatas"]:
+            source = str(meta.get("source", "unknown"))
+            row = rows.setdefault(
+                source,
+                {"source": source, "category": str(meta.get("category", "unknown")), "chunks": 0},
+            )
+            row["chunks"] += 1
+        return sorted(rows.values(), key=lambda r: (r["category"], r["source"]))
+
+    def delete_source(self, source: str) -> int:
+        """Delete every chunk of one source document; returns chunks removed."""
+        existing = self._collection.get(where={"source": source}, include=[])
+        ids = existing["ids"]
+        if ids:
+            self._collection.delete(ids=ids)
+        logger.info("Deleted %d chunk(s) of source %s", len(ids), source)
+        return len(ids)
+
     @staticmethod
     def _build_where(**filters: str | None) -> dict | None:
         """Compose Chroma's where-clause from optional equality filters.

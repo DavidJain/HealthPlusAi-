@@ -24,10 +24,11 @@ from __future__ import annotations
 import html
 import json
 import linecache
-import re
 import logging
 import os
+import re
 import sys
+import time
 import uuid
 from pathlib import Path
 
@@ -72,6 +73,7 @@ except Exception as _exc:  # no secrets.toml (normal for local runs using .env)
 
 from healthplus.application import KnowledgeBaseService, build_chat_service
 from healthplus.config import get_settings
+from healthplus.core.auth import Account, authenticate, load_accounts
 from healthplus.core.exceptions import ConfigurationError, HealthPlusError, LLMError
 from healthplus.core.logging import configure_logging
 from healthplus.core.privacy import redact_personal_data
@@ -189,6 +191,95 @@ def _get_chat_service(provider: str = "claude"):
 
 
 _bootstrap()
+
+
+# ---------------------------------------------------------------------------
+# Login gate — nothing below runs until a configured account signs in
+# ---------------------------------------------------------------------------
+
+# Brute-force protection (per browser session): after this many failures
+# the form locks for LOCKOUT_SECONDS.
+MAX_LOGIN_ATTEMPTS = 5
+LOCKOUT_SECONDS = 60
+
+
+def _configured_accounts() -> dict[str, Account]:
+    try:
+        return load_accounts(st.secrets.get("accounts"))
+    except Exception:  # no secrets file at all
+        return {}
+
+
+def _login_card_header(subtitle: str) -> None:
+    st.markdown(
+        '<div class="hp-login-head hp-rise">'
+        '<div class="hp-mark">+</div>'
+        '<div class="hp-login-title">HealthPlus <span>AI</span></div>'
+        f"<p>{subtitle}</p>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+
+def _render_setup_required() -> None:
+    """Fail closed: with no accounts configured, nobody gets in."""
+    _, middle, _ = st.columns([1, 2, 1])
+    with middle:
+        _login_card_header("Sign-in is not set up yet")
+        st.warning(
+            "No login accounts are configured, so the app is locked.\n\n"
+            "1. Run `python scripts/hash_password.py` and answer the prompts.\n"
+            "2. Paste the printed `[accounts.<name>]` block into your secrets — "
+            "`.streamlit/secrets.toml` locally, or **Settings → Secrets** on "
+            "Streamlit Cloud.\n"
+            "3. Create at least one account with `role = \"admin\"`."
+        )
+
+
+def _render_login(accounts: dict[str, Account]) -> None:
+    _, middle, _ = st.columns([1, 2, 1])
+    with middle:
+        _login_card_header("Sign in to the hospital knowledge assistant")
+        locked_until = st.session_state.get("login_locked_until", 0.0)
+        if time.time() < locked_until:
+            st.error(
+                f"Too many failed attempts. Try again in "
+                f"{int(locked_until - time.time()) + 1} seconds."
+            )
+            return
+        with st.form("login", border=False):
+            username = st.text_input("Username", autocomplete="username")
+            password = st.text_input("Password", type="password", autocomplete="current-password")
+            submitted = st.form_submit_button("Sign in", type="primary", use_container_width=True)
+        if submitted:
+            account = authenticate(accounts, username, password)
+            if account is None:
+                time.sleep(1)  # slows down password guessing
+                failures = st.session_state.get("login_failures", 0) + 1
+                st.session_state["login_failures"] = failures
+                if failures >= MAX_LOGIN_ATTEMPTS:
+                    st.session_state["login_failures"] = 0
+                    st.session_state["login_locked_until"] = time.time() + LOCKOUT_SECONDS
+                st.error("Incorrect username or password.")
+                return
+            st.session_state.pop("login_failures", None)
+            st.session_state["auth_user"] = account.username
+            st.rerun()
+        st.caption("Accounts are created by the hospital admin. Not medical advice.")
+
+
+ACCOUNTS = _configured_accounts()
+if not ACCOUNTS:
+    _render_setup_required()
+    st.stop()
+
+# Look the account up on every run, so removing it from secrets (or
+# changing its role) takes effect immediately for signed-in sessions.
+current_user: Account | None = ACCOUNTS.get(st.session_state.get("auth_user", ""))
+if current_user is None:
+    st.session_state.pop("auth_user", None)
+    _render_login(ACCOUNTS)
+    st.stop()
 
 
 # ---------------------------------------------------------------------------
@@ -327,54 +418,38 @@ with st.sidebar:
 
     st.markdown('<hr class="hp-divider">', unsafe_allow_html=True)
 
-    # ── Document upload ───────────────────────────────────────────────
-    st.markdown('<div class="hp-sidebar-label">Add a Document</div>', unsafe_allow_html=True)
+    # ── Account ───────────────────────────────────────────────────────
+    st.markdown('<div class="hp-sidebar-label">Account</div>', unsafe_allow_html=True)
+    role_label = "Admin" if current_user.is_admin else "User"
+    st.markdown(
+        '<div class="hp-user-chip">'
+        f'<div class="hp-avatar">{html.escape(current_user.name[:1].upper())}</div>'
+        f"<div><b>{html.escape(current_user.name)}</b>"
+        f'<small>{html.escape(current_user.username)} · {role_label}</small></div>'
+        "</div>",
+        unsafe_allow_html=True,
+    )
 
-    # A successful ingest ends in st.rerun() (so the stats above refresh),
-    # which would wipe an inline st.success — so the message is parked in
-    # session_state and shown on the run AFTER the rerun.
-    if "last_ingest_message" in st.session_state:
-        st.success(st.session_state.pop("last_ingest_message"))
-
-    if knowledge_base is None:
-        st.caption("Uploads are disabled while the knowledge base is unavailable.")
-    else:
-        uploaded_file = st.file_uploader("PDF document", type=["pdf"], label_visibility="collapsed")
-        upload_category = st.selectbox(
-            "Document category",
-            options=list(DocumentCategory),
-            format_func=lambda c: c.value.replace("_", " ").title(),
+    # Admins switch between the chat and the separate admin panel; regular
+    # users never see the admin view at all.
+    admin_view = False
+    if current_user.is_admin:
+        admin_view = (
+            st.radio(
+                "View",
+                options=["💬 Chat", "🛠️ Admin panel"],
+                horizontal=True,
+                label_visibility="collapsed",
+                key="view_choice",
+            )
+            == "🛠️ Admin panel"
         )
-        if st.button(
-            "⬆️ Ingest document",
-            type="primary",
-            use_container_width=True,
-            disabled=uploaded_file is None,
-        ):
-            try:
-                with st.spinner("Ingesting document…"):
-                    settings = get_settings()
-                    uploads_dir = settings.data_dir / "uploads"
-                    uploads_dir.mkdir(parents=True, exist_ok=True)
-                    # Persist the upload to disk first: the pipeline's loader
-                    # works on paths, and keeping the file gives us a
-                    # re-ingestable record of what entered the KB.
-                    saved_path = uploads_dir / uploaded_file.name
-                    saved_path.write_bytes(uploaded_file.getvalue())
-                    report = knowledge_base.ingest_pdf(
-                        saved_path, category=upload_category
-                    )
-                st.session_state["last_ingest_message"] = (
-                    f"✅ Ingested {report.source}: {report.pages} pages → "
-                    f"{report.chunks} chunks in {report.duration_seconds}s."
-                )
-                # Rerun so the chunk/category stats at the top reflect the
-                # freshly ingested document.
-                st.rerun()
-            except HealthPlusError as exc:
-                # Covers DocumentLoadError and EmptyDocumentError (bad or
-                # scanned PDFs) with the pipeline's own explanation.
-                st.error(f"Could not ingest {uploaded_file.name}: {exc}")
+
+    if st.button("↪ Sign out", use_container_width=True):
+        _reset_conversation()
+        for key in ("auth_user", "view_choice", "pending_prompt"):
+            st.session_state.pop(key, None)
+        st.rerun()
 
 
 # ---------------------------------------------------------------------------
@@ -455,6 +530,117 @@ st.markdown(
     "</div></div>",
     unsafe_allow_html=True,
 )
+
+
+def _render_admin_panel(kb: KnowledgeBaseService | None) -> None:
+    """Admin-only view: knowledge-base management and account overview."""
+    st.markdown(
+        '<div class="hp-compact hp-rise">'
+        '<div class="hp-compact-title">Admin <span class="hp-accent">panel.</span></div>'
+        f'<span class="hp-pill">Signed in as {html.escape(current_user.name)}</span>'
+        "</div>",
+        unsafe_allow_html=True,
+    )
+    if kb is None:
+        st.error("The knowledge base is unavailable.")
+        return
+
+    # Parked across st.rerun(), which would otherwise wipe an inline message.
+    if "admin_notice" in st.session_state:
+        st.success(st.session_state.pop("admin_notice"))
+
+    st.markdown(_overview_panel_html(), unsafe_allow_html=True)
+
+    tab_docs, tab_upload, tab_accounts = st.tabs(
+        ["📚 Documents", "⬆️ Upload", "👥 Accounts"]
+    )
+
+    with tab_docs:
+        docs = kb.documents()
+        if not docs:
+            st.info("No documents yet — add one in the Upload tab.")
+        else:
+            st.dataframe(
+                [
+                    {
+                        "Document": d["source"],
+                        "Category": d["category"].replace("_", " ").title(),
+                        "Chunks": d["chunks"],
+                    }
+                    for d in docs
+                ],
+                use_container_width=True,
+                hide_index=True,
+            )
+            st.markdown("**Remove a document**")
+            to_delete = st.selectbox(
+                "Document to remove",
+                options=[d["source"] for d in docs],
+                label_visibility="collapsed",
+            )
+            confirm = st.checkbox(
+                f"Yes, remove {to_delete} from the knowledge base", key="confirm_delete"
+            )
+            if st.button("🗑️ Remove document", disabled=not confirm):
+                removed = kb.delete_document(to_delete)
+                st.session_state["admin_notice"] = f"Removed {to_delete} ({removed} chunks)."
+                st.session_state.pop("confirm_delete", None)
+                st.rerun()
+
+    with tab_upload:
+        uploaded_file = st.file_uploader("PDF document", type=["pdf"])
+        upload_category = st.selectbox(
+            "Document category",
+            options=list(DocumentCategory),
+            format_func=lambda c: c.value.replace("_", " ").title(),
+        )
+        if st.button(
+            "⬆️ Ingest document",
+            type="primary",
+            disabled=uploaded_file is None,
+        ):
+            # Only the bare file name is kept, so a crafted name cannot write
+            # outside the uploads folder.
+            safe_name = Path(uploaded_file.name).name
+            try:
+                with st.spinner("Ingesting document…"):
+                    uploads_dir = get_settings().data_dir / "uploads"
+                    uploads_dir.mkdir(parents=True, exist_ok=True)
+                    saved_path = uploads_dir / safe_name
+                    saved_path.write_bytes(uploaded_file.getvalue())
+                    report = kb.ingest_pdf(saved_path, category=upload_category)
+                st.session_state["admin_notice"] = (
+                    f"Ingested {report.source}: {report.pages} pages → "
+                    f"{report.chunks} chunks in {report.duration_seconds}s."
+                )
+                st.rerun()
+            except HealthPlusError as exc:
+                st.error(f"Could not ingest {safe_name}: {exc}")
+        st.caption(
+            "On Streamlit Community Cloud, uploads and removals last until the app "
+            "restarts. For permanent changes, add PDFs to `data/knowledge_base/pdfs` "
+            "in GitHub and re-ingest."
+        )
+
+    with tab_accounts:
+        st.dataframe(
+            [
+                {"Username": a.username, "Name": a.name, "Role": a.role.title()}
+                for a in sorted(ACCOUNTS.values(), key=lambda a: (a.role, a.username))
+            ],
+            use_container_width=True,
+            hide_index=True,
+        )
+        st.caption(
+            "To add, remove, or change an account, run `python scripts/hash_password.py` "
+            "and edit the `[accounts]` section of the app's secrets. Passwords are "
+            "stored only as salted hashes."
+        )
+
+
+if admin_view:
+    _render_admin_panel(knowledge_base)
+    st.stop()
 
 # Intro (hero + overview + starter cards) lives in a placeholder: it is
 # swapped for a compact header the moment a conversation starts.

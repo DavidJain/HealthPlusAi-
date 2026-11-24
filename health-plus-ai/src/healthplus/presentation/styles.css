@@ -689,3 +689,92 @@ section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"]:hover {
         transition-duration: .01ms !important;
     }
 }
+
+/* ── Login ──────────────────────────────────────────────────────────── */
+.hp-login-head {
+    text-align: center;
+    margin: 12vh 0 1.4rem;
+}
+.hp-login-head .hp-mark {
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    font-size: 1.9rem;
+    margin: 0 auto 1rem;
+}
+.hp-login-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: -.035em;
+    color: #fff;
+    line-height: 1.15;
+}
+.hp-login-title span {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+.hp-login-head p { color: var(--muted); margin: .4rem 0 0; }
+
+[data-testid="stForm"] {
+    background: rgba(16, 14, 34, .7);
+    border: 1px solid var(--stroke-2) !important;
+    border-radius: 20px;
+    padding: 1.4rem 1.4rem 1.2rem !important;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,.8), 0 0 0 1px rgba(124,58,237,.12);
+}
+[data-testid="stForm"] input {
+    color: var(--text) !important;
+}
+[data-testid="stForm"] [data-testid="stBaseButton-primaryFormSubmit"] {
+    background: var(--grad-btn) !important;
+    border: 1px solid rgba(160,107,255,.6) !important;
+    color: #fff !important;
+    font-weight: 600 !important;
+    min-height: 44px;
+    box-shadow: 0 0 22px -4px rgba(124,58,237,.8);
+}
+
+/* ── Signed-in account chip ─────────────────────────────────────────── */
+.hp-user-chip {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .6rem .7rem;
+    margin-bottom: .7rem;
+    border-radius: var(--radius-sm);
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--stroke);
+}
+.hp-avatar {
+    width: 34px;
+    height: 34px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: var(--grad);
+    color: #fff;
+    font-weight: 700;
+}
+.hp-user-chip b { display: block; color: var(--text); font-size: .9rem; }
+.hp-user-chip small { color: var(--dim); font-size: .74rem; }
+
+/* ── Admin tabs ─────────────────────────────────────────────────────── */
+[data-testid="stTabs"] [data-baseweb="tab-list"] { gap: .4rem; }
+[data-testid="stTabs"] button[role="tab"] {
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--stroke);
+    border-radius: 999px;
+    padding: .35rem .9rem;
+}
+[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
+    background: rgba(124,58,237,.25);
+    border-color: rgba(160,107,255,.55);
+}
