@@ -22,11 +22,22 @@ this app should never see a Python traceback.
 from __future__ import annotations
 
 import json
+import linecache
 import logging
 import os
 import sys
 import uuid
 from pathlib import Path
+
+# Streamlit Cloud updates code in place without restarting the process.
+# st.cache_resource reads each cached function's source via inspect, which
+# uses linecache; a stale cached copy of the old file makes it read the
+# wrong lines (tokenize.TokenError). Forget this file's cached source on
+# every run so it is re-read from disk; checkcache() alone is not enough
+# because entries registered for exec'd scripts carry no mtime to compare.
+for _path in {__file__, str(Path(__file__).resolve())}:
+    linecache.cache.pop(_path, None)
+linecache.checkcache()
 
 # Hosted platforms (e.g. Streamlit Cloud) install requirements.txt but not
 # this project as a package, so make `src/` importable when it isn't already.
