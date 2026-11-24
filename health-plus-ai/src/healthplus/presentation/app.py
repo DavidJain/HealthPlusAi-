@@ -42,12 +42,20 @@ import streamlit.components.v1 as components  # noqa: E402
 # variables, so copy any secrets-provided keys into the environment before
 # get_settings() is first called. Real environment variables win.
 _SECRET_KEYS = ("OPENROUTER_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY")
+_keys_added = False
 try:
     for _key in _SECRET_KEYS:
         if not os.environ.get(_key) and _key in st.secrets:
             os.environ[_key] = str(st.secrets[_key]).strip()
+            _keys_added = True
 except Exception:  # no secrets.toml (normal for local runs using .env)
     pass
+if _keys_added:
+    # Streamlit Cloud can apply edited Secrets without restarting the
+    # process; drop settings cached before the key existed so it is seen.
+    from healthplus.config import get_settings as _get_settings
+
+    _get_settings.cache_clear()
 
 from healthplus.application import KnowledgeBaseService, build_chat_service
 from healthplus.config import get_settings
