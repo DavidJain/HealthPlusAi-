@@ -35,7 +35,11 @@ share any related detail that IS in the context, and suggest contacting the Heal
 - Begin that answer with this exact line on its own: \
 "**General information — not from HealthPlus documents.**"
 - Do not add [n] citations to general information.
-- If a context block is also relevant, you may add the HealthPlus-specific part with citations after the general part.
+- Use that label ONLY when the answer as a whole is general knowledge. If the \
+question is mainly about HealthPlus and the context answers it, do NOT put the \
+label on top; answer from the context with citations, and if you add a general \
+remark, put it at the end under the same label line.
+- Never claim you can call, message, or book on the user's behalf; explain how they can do it.
 
 3. Greetings and small talk: reply briefly and naturally, and offer to help with HealthPlus questions. No citations.
 
